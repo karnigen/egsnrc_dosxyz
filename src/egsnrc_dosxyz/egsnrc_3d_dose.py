@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+
+from pathlib import Path
+import numpy as np
+
+# - 3ddose format see pirs794 dosxyznrc, chapter 12
+class Egs3dDose:
+    def __init__(self):
+        pass
+
+    # reading 3ddose format
+    #    - only 6 lines !!!
+    def read_3ddose(self, fn_3ddose_in):
+        fn_3ddose_in = Path(fn_3ddose_in)
+        with fn_3ddose_in.open("r") as fi:
+            self.nx, self.ny, self.nz = [int(x) for x in fi.readline().strip().split()]         # voxel count
+            self.bx = np.array([float(x) for x in fi.readline().strip().split()], dtype="f4")   # x bounds (count nx+1)
+            self.by = np.array([float(x) for x in fi.readline().strip().split()], dtype="f4")   # y bounds (count ny+1)
+            self.bz = np.array([float(x) for x in fi.readline().strip().split()], dtype="f4")   # z bounds (count nz+1)
+            self.dose = np.array([float(x) for x in fi.readline().strip().split()], dtype='f4').reshape(self.nz, self.ny, self.nx) # nx*ny*nz
+            self.err  = np.array([float(x) for x in fi.readline().strip().split()], dtype='f4').reshape(self.nz, self.ny, self.nx) # nx*ny*nz
+        return self
+
+    def write_3ddose(self, fn_3ddose_out):
+        fn_3ddose_out = Path(fn_3ddose_out)
+        if fn_3ddose_out.exists():
+            print(f"File {fn_3ddose_out} already exists")
+            exit(1)
+        with fn_3ddose_out.open('w') as fo:
+            fo.write(f"{self.nx}  {self.ny}  {self.nz} \n")
+            
+            # axes boundaries
+            for f in self.bx.flat:  fo.write(f"{f:.6f} ")
+            fo.write("\n")
+            for f in self.by.flat:  fo.write(f"{f:.6f} ")
+            fo.write("\n")
+            for f in self.bz.flat:  fo.write(f"{f:.6f} ")
+            fo.write("\n")
+            
+            # values
+            for f in self.dose.flat: fo.write(f"{f:.8g} ")
+            fo.write("\n")
+            for f in self.err.flat: fo.write(f"{f:.8g} ")
+            fo.write("\n")
+        return self
