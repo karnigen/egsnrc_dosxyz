@@ -9,14 +9,21 @@ import numpy as np
 
 # - egsphant format see pirs794 dosxyznrc, chapter 16.6
 # - read write .egsphant file
-# - memory layout of egsnrc is Fortran so axes of arrays are reversed here,
-#   - media[z,y,x], densities[z,y,x]
-#   - numpy only knows C memory layout, Fortran layout is always view
+# - memory layout of .egsphant is Fortran, using axes order z,y,x for media[z,y,x], densities[z,y,x]
+#   - numpy only knows C memory layout, Fortran layout is only view
 class EgsPhant:
     def __init__(self):
         pass
 
     def read_egsphant(self, fn_phant_in):
+        """read .egsphant file
+
+        Args:
+            fn_phant_in (str): .egsphant input file
+
+        Returns:
+            EgsPhant: self
+        """
         fn_phant_in = Path(fn_phant_in)
         with fn_phant_in.open("r") as fi:
             self.nmat = int(fi.readline().strip())  # number of media in phantom
@@ -57,9 +64,22 @@ class EgsPhant:
                 fi.readline()  # one empty line
         return self
 
-    def write_phantom(self, fn_phant_out):
+    def write_phantom(self, fn_phant_out, overwrite = False):
+        """write .egsphant file
+
+        Args:
+            fn_phant_out (str): .egsphant output file
+            overwrite (bool, optional): overwrite output file. Defaults to False.
+
+        Returns:
+            EgsPhant: self
+        """
+        # '''
+        #     fn_phant_out: [string,path] - output filename
+        #     overwrite:    [bool]        - overwrite silently if file exists
+        # '''
         fn_phant_out = Path(fn_phant_out)
-        if fn_phant_out.exists():
+        if not overwrite and fn_phant_out.exists():
             print(f"File {fn_phant_out} already exists")
             exit(1)
 
