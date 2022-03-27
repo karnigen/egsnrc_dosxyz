@@ -3,6 +3,39 @@
 from pathlib import Path
 import numpy as np
 
+
+# default ramp
+#    medium                  (CTmax-CTmin)/(max density - min density)
+#    ------                  --------------------------------------
+# 1 AIR700ICRU                       (-974 - -1024)/(0.044-0.001)
+# 2 LUNG700ICRU                      (-724 - -974)/(0.302-0.044)
+# 3 ICRUTISSUE700ICRU                (101 - -724)/(1.101-0.302)
+# 4 ICRPBONE700ICRU                  (1976 - 101)/(2.088-1.101)
+
+# usage: 
+# ramp = EgsRamp() or ramp = EgsRamp(mats=[mat1,...], bounds=[b1,...])
+# print(ramp.mats)
+# print(ramp.ramp([0.001,1, 3]))
+class EgsRamp:
+    # mats - list of media
+    #      - first medium is always vacuum, cannot be changed
+    # bound - same size as mats
+    def __init__(self, mats=None, bounds=None):
+        if mats is None:
+            self.mats = ["AIR700ICRU", "LUNG700ICRU", "ICRUTISSUE700ICRU", "ICRPBONE700ICRU"]
+        else:
+            self.mats = mats
+        if bounds is None:
+            self.bounds = np.array([0.001, 0.044, 0.302, 1.101], dtype="f8")
+        else:
+            self.bounds = np.array(bound, dtype="f8")
+
+    # map density to media index
+    # 0 - is vacuum, it is implicit, user media begins 1
+    def chunk(self, density):
+        return np.searchsorted(self.bounds, density, side="right")
+
+
 # - Usage:
 #     egsphant = EgsPhant().read_egsphant(fn_phant_in)
 #     egsphant.write_phantom(fn_phant_out)
@@ -14,6 +47,45 @@ import numpy as np
 class EgsPhant:
     def __init__(self):
         pass
+
+    # - convert medium index 1-95 to ASCII code
+    #     mat_index - 1-95
+    #     return    - ASCII code
+    # - original fortran code:
+    #     (achar(MOD((med_index+16),95) + 32)  # see ctcreate
+    def mat2ascii(self, mat_index):
+        mat_ascii = chr(  ((mat_index + 16) % 95)   + 32 ) 
+        return mat_ascii
+
+    # - original fortran code:
+    #     i = mod((iachar(mat_ascii) + 47), 95)   # see dosxyznrc
+    def ascii2mat(self, mat_ascii):
+        mat_index = ( ord(mat_ascii) + 47 ) % 95
+        return mat_index
+
+
+    # ramp - see EgsRamp
+    # origin - (x,y,z)
+    # spacing - (x,y,z)
+    # pixel[z,y,x] - el.densities fortran array with reverse xyz!!!
+    def create_phantom(self, ramp, origin, spacing, pixels):
+        self.mats = ramp.mats
+        self.nmat = len(self.mats)
+        self.estepes = [0] * self.nmat
+
+        self.nz,self.ny,self.nx =list(pixels.shape)  # F array zyx
+        size = [self.nx,self.ny,self.nz]   # xyz
+
+        # setup boundaries
+        b=[0] * 3           # allocate
+        for i in range(3):
+            b[i] = np.linspace(origin[i] , origin[i]+size[i]*spacing[i], num=size[i]+1, endpoint=True)
+        self.bx, self.by, self.bz = b
+
+        self.media = np.array(ramp.chunk(pixels), dtype='B')
+        self.densities = pixels
+
+
 
     def read_egsphant(self, fn_phant_in):
         """read .egsphant file
@@ -51,7 +123,8 @@ class EgsPhant:
             for iz in range(self.nz):
                 for iy in range(self.ny):
                     line=fi.readline().strip()
-                    row = np.fromiter(map(ord, line), dtype="B")
+                    # row = np.fromiter(map(ord, line), dtype="B")           # binary
+                    row = np.fromiter(map(self.ascii2mat, line), dtype="B")  # remap ascii to number as egs "0"->0
                     self.media[iz,iy,:]=row
                 fi.readline()  # one empty line
 
@@ -90,28 +163,29 @@ class EgsPhant:
                 fo.write(f"{self.mats[i]}\n")
 
             for i in range(self.nmat):         # estepes - dummy
-                fo.write("{:13.8f}    ".format(self.estepes[i]))
+                fo.write("{:.1f} ".format(self.estepes[i]))
             fo.write("\n")
 
-            fo.write(f"{self.nx:5d}{self.ny:5d}{self.nz:5d}\n")  # voxel count
+            fo.write(f"{self.nx} {self.ny} {self.nz}\n")  # voxel count
 
             for i in range(self.nx+1):         # x bounds
-                fo.write("{:13.8f}    ".format(self.bx[i]))
+                fo.write("{:.4f} ".format(self.bx[i]))
             fo.write("\n")
 
             for i in range(self.ny+1):         # y bounds
-                fo.write("{:13.8f}    ".format(self.by[i]))
+                fo.write("{:.4f} ".format(self.by[i]))
             fo.write("\n")
 
             for i in range(self.nz+1):         # z bounds
-                fo.write("{:13.8f}    ".format(self.bz[i]))
+                fo.write("{:.4f} ".format(self.bz[i]))
             fo.write("\n")
 
             # write media indexes
             for iz in range(self.nz):
                 for iy in range(self.ny):
                     row=self.media[iz,iy,:]
-                    fo.write(row.tobytes().decode('ascii')+"\n")
+                    # fo.write(row.tobytes().decode('ascii')+"\n")     # binary  0->"\0"
+                    fo.write(''.join(map(self.mat2ascii, row)) + "\n") # remap int to ascii as egs 0->'0'
                 fo.write("\n")  # one empty line
 
             # writing densities
@@ -119,7 +193,7 @@ class EgsPhant:
                 for iy in range(self.ny):
                     row=self.densities[iz,iy,:]
                     for ix in range(self.nx):
-                        fo.write(" {:10.6f}".format(row[ix]))
+                        fo.write(" {:.6f}".format(row[ix]))
                     fo.write("\n")
                 fo.write("\n")  # one empty line
         
