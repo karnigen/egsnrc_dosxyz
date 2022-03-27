@@ -6,9 +6,11 @@ import numpy as np
 from egsnrc_dosxyz import *
 
 def dcm2egs_3ddose(fn_3ddose_in, fn_phant_in, fn_3ddose_out, fn_phant_out,  overwrite = False):
-    """ - transform .3ddose and .egsphant from dicom coords to dosxyz coords
+    """ - transform .3ddose and .egsphant from dicom coords to dosxyz coords (only for doswyz_show)
           - implemented as rotation by 90 deg around x axis
           - dosxyz_show requires also .egsphant matrix to be rotated
+        - dosxyz and beam coords x:left->right y:from gantry z:up->down
+          dicom coord            x:left->right y:up->down    z:to gantry
 
 
     Args:
@@ -36,20 +38,24 @@ def dcm2egs_3ddose(fn_3ddose_in, fn_phant_in, fn_3ddose_out, fn_phant_out,  over
     phant.write_phantom(fn_phant_out, overwrite)
 
 
-def dcm2egs_3ddose_full(fbase_in, postfix="_1", overwrite=False):
+def dcm2egs_3ddose_full(fn3ddose_base, fnphant_base=None, postfix="_1", overwrite=False):
     """prepare file names and call dcm2egs_3ddose(...)
 
     Args:
-        fbase_in (str): input file base of .3ddose and .egsphant
+        fn3ddose_base (str): input file base of .3ddose (.egsphant)
+        fnphant_base (str): input file base of .egsphant
         postfix (str, optional): string added to fbase_in creates output. Defaults to "_1".
         overwrite (bool, optional): overwrite output files. Defaults to False.
     """
-    fn_3ddose_in = Path(fbase_in + ".3ddose")
-    fn_phant_in = Path(fbase_in + ".egsphant")
 
-    fbase_out = fbase_in + postfix
-    fn_3ddose_out = Path(fbase_out + ".3ddose")
-    fn_phant_out = Path(fbase_out + ".egsphant")
+    if fnphant_base is None:
+        fnphant_base = fn3ddose_base
+
+    fn_3ddose_in = Path(fn3ddose_base + ".3ddose")
+    fn_phant_in = Path(fnphant_base + ".egsphant")
+
+    fn_3ddose_out = Path(fn3ddose_base + postfix + ".3ddose")
+    fn_phant_out = Path(fnphant_base + postfix + ".egsphant")
 
     dcm2egs_3ddose(fn_3ddose_in, fn_phant_in, fn_3ddose_out, fn_phant_out,  overwrite)
 
