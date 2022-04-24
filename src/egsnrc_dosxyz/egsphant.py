@@ -39,6 +39,14 @@ class EgsRamp:
 # - Usage:
 #     egsphant = EgsPhant().read_egsphant(fn_phant_in)
 #     egsphant.write_phantom(fn_phant_out)
+# - Variables:
+#   - mats
+#     nmat
+#     estepes = None, not used on write is always replaced by [0] * nmat
+#     nz,ny,nx - size z,y,x
+#     bz,by,bx - boundaries of size nz+1,ny+1,nx+1
+#     media[nz,ny,nx, dtype='B'] - media index, integer from 1 to 94, not ascii !!!
+#     densities[nz,ny,nx, dtype='f4'] - mass densities !!! (not electron densities)
 
 # - egsphant format see pirs794 dosxyznrc, chapter 16.6
 # - read write .egsphant file
@@ -46,6 +54,7 @@ class EgsRamp:
 #   - numpy only knows C memory layout, Fortran layout is only view
 class EgsPhant:
     def __init__(self):
+        self.estepes = None    # not used anymore and set to [0] * nmat on write
         pass
 
     # - convert medium index 1-95 to ASCII code
@@ -71,7 +80,6 @@ class EgsPhant:
     def create_phantom(self, ramp, origin, spacing, pixels):
         self.mats = ramp.mats
         self.nmat = len(self.mats)
-        self.estepes = [0] * self.nmat
 
         self.nz,self.ny,self.nx =list(pixels.shape)  # F array zyx
         size = [self.nx,self.ny,self.nz]   # xyz
@@ -151,6 +159,8 @@ class EgsPhant:
         #     fn_phant_out: [string,path] - output filename
         #     overwrite:    [bool]        - overwrite silently if file exists
         # '''
+        self.estepes = [0] * self.nmat
+
         fn_phant_out = Path(fn_phant_out)
         if not overwrite and fn_phant_out.exists():
             print(f"File {fn_phant_out} already exists")
