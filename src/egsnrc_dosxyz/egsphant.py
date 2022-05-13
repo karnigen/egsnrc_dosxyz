@@ -28,7 +28,7 @@ class EgsRamp:
         if bounds is None:
             self.bounds = np.array([0.001, 0.044, 0.302, 1.101], dtype="f8")
         else:
-            self.bounds = np.array(bound, dtype="f8")
+            self.bounds = np.array(bounds, dtype="f8")
 
     # map density to media index
     # 0 - is vacuum, it is implicit, user media begins 1
@@ -74,7 +74,7 @@ class EgsPhant:
 
 
     # ramp - see EgsRamp
-    # origin - (x,y,z)
+    # origin - (x,y,z) - center of first voxel in row data
     # spacing - (x,y,z)
     # pixel[z,y,x] - el.densities fortran array with reverse xyz!!!
     def create_phantom(self, ramp, origin, spacing, pixels):
@@ -87,7 +87,8 @@ class EgsPhant:
         # setup boundaries
         b=[0] * 3           # allocate
         for i in range(3):
-            b[i] = np.linspace(origin[i] , origin[i]+size[i]*spacing[i], num=size[i]+1, endpoint=True)
+            b[i]  = np.linspace(origin[i] , origin[i]+size[i]*spacing[i], num=size[i]+1, endpoint=True)
+            b[i] -= spacing[i]/2     # move bound by half of size, origin is in center of first voxel
         self.bx, self.by, self.bz = b
 
         self.media = np.array(ramp.chunk(pixels), dtype='B')
