@@ -1,0 +1,91 @@
+$IAEA_INDEX:
+1000   // Test header
+
+$TITLE:
+PHASESPACE in IAEA format
+
+$FILE_TYPE:
+0
+
+$CHECKSUM:
+154475
+
+$RECORD_CONTENTS:
+    1     // X is stored ?
+    1     // Y is stored ?
+    0     // Z is stored ?
+    1     // U is stored ?
+    1     // V is stored ?
+    1     // W is stored ?
+    1     // Weight is stored ?
+    2     // Extra floats stored ?
+    1     // Extra longs stored ?
+    3     // ZLAST variable stored in the extrafloat array [ 0]
+    0     // Generic float variable stored in the extrafloat array [ 1]
+    2     // LATCH EGS variable stored in the extralong array [ 0]
+
+$RECORD_CONSTANT:
+    60.0000     // Constant Z
+
+$RECORD_LENGTH:
+37
+
+$BYTE_ORDER:
+1234
+
+$ORIG_HISTORIES:
+9692268
+
+$PARTICLES:
+8350
+
+$PHOTONS:
+8350
+
+$TRANSPORT_PARAMETERS:
+
+$MACHINE_TYPE:
+
+$MONTE_CARLO_CODE_VERSION:
+
+$GLOBAL_PHOTON_ENERGY_CUTOFF:
+  0.00000
+
+$GLOBAL_PARTICLE_ENERGY_CUTOFF:
+  0.00000
+
+$COORDINATE_SYSTEM_DESCRIPTION:
+//  OPTIONAL INFORMATION
+
+$BEAM_NAME:
+
+$FIELD_SIZE:
+
+$NOMINAL_SSD:
+
+$MC_INPUT_FILENAME:
+
+$VARIANCE_REDUCTION_TECHNIQUES:
+
+$INITIAL_SOURCE_DESCRIPTION:
+
+$PUBLISHED_REFERENCE:
+
+$AUTHORS:
+
+$INSTITUTION:
+
+$LINK_VALIDATION:
+
+$ADDITIONAL_NOTES:
+This is IAEA header as defined in the technical
+report IAEA(NDS)-0484, Vienna, 2006
+
+$STATISTICAL_INFORMATION_PARTICLES:
+//        Weight        Wmin       Wmax       <E>         Emin         Emax    Particle
+             4175          1          1        1.7       0.03582       6.043   PHOTONS
+
+$STATISTICAL_INFORMATION_GEOMETRY:
+ -17.4437  28.0124
+ -28.7045  25.773
+
