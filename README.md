@@ -59,11 +59,26 @@ Add `--overwrite` to replace existing output files.
 
 ## Tests
 
-Run the test suite with:
+Run the test menu:
 
 ```sh
-uv run pytest
+./dev/040_tests.sh
 ```
+
+Choose the full suite or an individual test module. Pytest arguments can also be
+passed directly, for example:
+
+```sh
+./dev/040_tests.sh -k phantom
+```
+
+Run the broader quality-check menu for tests, Ruff lint, or a package build:
+
+```sh
+./dev/040_checks.sh
+```
+
+The "all checks" option runs the full test suite, Ruff lint, and `uv build`.
 
 ## Examples
 

@@ -50,16 +50,21 @@ class Egs3dDose:
             fo.write(f"{self.nx}  {self.ny}  {self.nz}\n")
 
             # axes boundaries
-            for f in self.bx.flat:  fo.write(f"{f:.6f} ")
+            for boundary in self.bx.flat:
+                fo.write(f"{boundary:.6f} ")
             fo.write("\n")
-            for f in self.by.flat:  fo.write(f"{f:.6f} ")
+            for boundary in self.by.flat:
+                fo.write(f"{boundary:.6f} ")
             fo.write("\n")
-            for f in self.bz.flat:  fo.write(f"{f:.6f} ")
+            for boundary in self.bz.flat:
+                fo.write(f"{boundary:.6f} ")
             fo.write("\n")
 
             # values dose and error
-            for f in self.dose.flat: fo.write(f"{f:.8g} ")
+            for value in self.dose.flat:
+                fo.write(f"{value:.8g} ")
             fo.write("\n")
-            for f in self.err.flat: fo.write(f"{f:.8g} ")
+            for value in self.err.flat:
+                fo.write(f"{value:.8g} ")
             fo.write("\n")
         return self

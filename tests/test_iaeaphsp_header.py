@@ -9,7 +9,6 @@ from egsnrc_dosxyz.iaeaphsp_header import (
     write_iaeaphsp_header,
 )
 
-
 SAMPLE_HEADER = (
     Path(__file__).resolve().parents[1]
     / "examples"

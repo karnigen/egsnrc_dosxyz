@@ -26,5 +26,18 @@ Homepage = "https://github.com/karnigen/egsnrc_dosxyz"
 Issues = "https://github.com/karnigen/egsnrc_dosxyz/issues"
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "ruff>=0.9"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra"]
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/egsnrc_dosxyz/__init__.py" = ["F403"]
 

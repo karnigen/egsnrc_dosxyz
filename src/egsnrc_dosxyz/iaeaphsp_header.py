@@ -85,8 +85,10 @@ class IAEAparser:
         # struct.unpack string
         self.record_unpack = "=bf"  # Standard sizes, no padding: 1 byte for type and 4 for energy.
         self.record_unpack += f"{np.sum(self.record_contents[0:7]) - 1}f"  # xyz uvw whgt
-        if self.nxfloat > 0: self.record_unpack += f"{self.nxfloat}f"
-        if self.nxlong > 0: self.record_unpack += f"{self.nxlong}i"
+        if self.nxfloat > 0:
+            self.record_unpack += f"{self.nxfloat}f"
+        if self.nxlong > 0:
+            self.record_unpack += f"{self.nxlong}i"
 
         # particles
         self.particles = PH['PARTICLES'][0][0]
@@ -101,8 +103,10 @@ class IAEAparser:
         for i in range(len(self.rec_attr)):              # parse dynamic data
             self.r.__setattr__(self.rec_attr[i], q[2+i])
         p=q[2+len(self.rec_attr):]      # data for xfloat and xlong
-        if self.nxfloat > 0: self.r.xfloat = p[:self.nxfloat]
-        if self.nxlong > 0: self.r.xlong = p[self.nxfloat:]
+        if self.nxfloat > 0:
+            self.r.xfloat = p[:self.nxfloat]
+        if self.nxlong > 0:
+            self.r.xlong = p[self.nxfloat:]
         if self.r.t < 0:  # here is stored sign for w
             sw=-1
             self.r.t = -self.r.t
@@ -158,8 +162,10 @@ def read_iaeaphsp_header(filename_iaeaphsp):
         for d in data:
             q = d.split('//',1)  # we only support c++ // comments
             lines.append(q[0])
-            if len(q) > 1: notes.append(q[1])
-            else:          notes.append('')
+            if len(q) > 1:
+                notes.append(q[1])
+            else:
+                notes.append('')
         return lines,notes
 
     PH={}
@@ -169,7 +175,8 @@ def read_iaeaphsp_header(filename_iaeaphsp):
         for line in fi:
             line = line.rstrip()
             # print(line)
-            if len(line)==0: continue
+            if len(line) == 0:
+                continue
             if line[0] == '$' and line[-1]==':':   # key - blockname
                 if key is not None:                # save previous block if any
                     lines,notes = split_data(data)
@@ -218,7 +225,8 @@ def write_iaeaphsp_header(PH, filename_iaeaphsp, overwrite=False):
             for d in zip(*v):   # v=[lines,notes]
                 line,note = d
                 fo.write(f"{line}")
-                if len(note): fo.write(f"//{note}")
+                if len(note):
+                    fo.write(f"//{note}")
                 fo.write("\n")
             fo.write("\n")
 

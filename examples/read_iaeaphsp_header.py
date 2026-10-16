@@ -3,7 +3,6 @@ from pathlib import Path
 
 from egsnrc_dosxyz.iaeaphsp_header import read_iaeaphsp_header
 
-
 DEFAULT_HEADER = Path(__file__).parent / "data" / "iaeaphsp" / "ex1.IAEAheader"
 
 
