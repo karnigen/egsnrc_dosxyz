@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from egsnrc_dosxyz.egs3ddose import Egs3dDose
 
@@ -22,3 +23,13 @@ def test_3ddose_round_trip(tmp_path):
     np.testing.assert_array_equal(result.bz, original.bz)
     np.testing.assert_allclose(result.dose, original.dose)
     np.testing.assert_allclose(result.err, original.err)
+
+
+def test_write_3ddose_refuses_to_overwrite_by_default(tmp_path):
+    output = tmp_path / "existing.3ddose"
+    output.write_text("preserve this file")
+
+    with pytest.raises(FileExistsError):
+        Egs3dDose().write_3ddose(output)
+
+    assert output.read_text() == "preserve this file"

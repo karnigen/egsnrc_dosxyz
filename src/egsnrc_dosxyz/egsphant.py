@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uvr
 
 from pathlib import Path
-import numpy as np
 
+import numpy as np
 
 # default ramp
 #    medium                  (CTmax-CTmin)/(max density - min density)
@@ -12,7 +12,7 @@ import numpy as np
 # 3 ICRUTISSUE700ICRU                (101 - -724)/(1.101-0.302)
 # 4 ICRPBONE700ICRU                  (1976 - 101)/(2.088-1.101)
 
-# usage: 
+# usage:
 # ramp = EgsRamp() or ramp = EgsRamp(mats=[mat1,...], bounds=[b1,...])
 # print(ramp.mats)
 # print(ramp.ramp([0.001,1, 3]))
@@ -55,7 +55,6 @@ class EgsRamp:
 class EgsPhant:
     def __init__(self):
         self.estepes = None    # not used anymore and set to [0] * nmat on write
-        pass
 
     # - convert medium index 1-95 to ASCII code
     #     mat_index - 1-95
@@ -63,7 +62,7 @@ class EgsPhant:
     # - original fortran code:
     #     (achar(MOD((med_index+16),95) + 32)  # see ctcreate
     def mat2ascii(self, mat_index):
-        mat_ascii = chr(  ((mat_index + 16) % 95)   + 32 ) 
+        mat_ascii = chr(  ((mat_index + 16) % 95)   + 32 )
         return mat_ascii
 
     # - original fortran code:
@@ -164,8 +163,7 @@ class EgsPhant:
 
         fn_phant_out = Path(fn_phant_out)
         if not overwrite and fn_phant_out.exists():
-            print(f"File {fn_phant_out} already exists")
-            exit(1)
+            raise FileExistsError(fn_phant_out)
 
         with fn_phant_out.open("w") as fo:
             fo.write(f"{self.nmat}\n")         # count of media
@@ -174,21 +172,21 @@ class EgsPhant:
                 fo.write(f"{self.mats[i]}\n")
 
             for i in range(self.nmat):         # estepes - dummy
-                fo.write("{:.1f} ".format(self.estepes[i]))
+                fo.write(f"{self.estepes[i]:.1f} ")
             fo.write("\n")
 
             fo.write(f"{self.nx} {self.ny} {self.nz}\n")  # voxel count
 
             for i in range(self.nx+1):         # x bounds
-                fo.write("{:.4f} ".format(self.bx[i]))
+                fo.write(f"{self.bx[i]:.4f} ")
             fo.write("\n")
 
             for i in range(self.ny+1):         # y bounds
-                fo.write("{:.4f} ".format(self.by[i]))
+                fo.write(f"{self.by[i]:.4f} ")
             fo.write("\n")
 
             for i in range(self.nz+1):         # z bounds
-                fo.write("{:.4f} ".format(self.bz[i]))
+                fo.write(f"{self.bz[i]:.4f} ")
             fo.write("\n")
 
             # write media indexes
@@ -204,9 +202,9 @@ class EgsPhant:
                 for iy in range(self.ny):
                     row=self.densities[iz,iy,:]
                     for ix in range(self.nx):
-                        fo.write(" {:.6f}".format(row[ix]))
+                        fo.write(f" {row[ix]:.6f}")
                     fo.write("\n")
                 fo.write("\n")  # one empty line
-        
+
         return self
 

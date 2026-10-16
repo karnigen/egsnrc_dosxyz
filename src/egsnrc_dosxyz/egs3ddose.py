@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uvr
 
 from pathlib import Path
+
 import numpy as np
 
 # Usage:
@@ -12,7 +13,7 @@ import numpy as np
 # - read and write .3ddose files
 # - memory layout of .3ddose is Fortran, using axes order z,y,x for dose[z,y,x], err[z,y,x]
 #   - numpy only knows C memory layout and Fortran layout is only view
-# 
+#
 class Egs3dDose:
     def __init__(self):
         pass
@@ -50,11 +51,10 @@ class Egs3dDose:
         """
         fn_3ddose_out = Path(fn_3ddose_out)
         if not overwrite and fn_3ddose_out.exists():
-            print(f"File {fn_3ddose_out} already exists")
-            exit(1)
+            raise FileExistsError(fn_3ddose_out)
         with fn_3ddose_out.open('w') as fo:
             fo.write(f"{self.nx}  {self.ny}  {self.nz}\n")
-            
+
             # axes boundaries
             for f in self.bx.flat:  fo.write(f"{f:.6f} ")
             fo.write("\n")
@@ -62,7 +62,7 @@ class Egs3dDose:
             fo.write("\n")
             for f in self.bz.flat:  fo.write(f"{f:.6f} ")
             fo.write("\n")
-            
+
             # values dose and error
             for f in self.dose.flat: fo.write(f"{f:.8g} ")
             fo.write("\n")
