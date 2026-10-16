@@ -10,19 +10,17 @@ from egsnrc_dosxyz.egsphant import EgsPhant
 
 
 def dcm2egs_3ddose(fn_3ddose_in, fn_phant_in, fn_3ddose_out, fn_phant_out,  overwrite = False):
-    """ - transform .3ddose and .egsphant from dicom coords to dosxyz coords (only for doswyz_show)
-          - implemented as rotation by 90 deg around x axis
-          - dosxyz_show requires also .egsphant matrix to be rotated
-        - dosxyz and beam coords x:left->right y:from gantry z:up->down
-          dicom coord            x:left->right y:up->down    z:to gantry
+    """Rotate matching dose and phantom grids from DICOM to DOSXYZ coordinates.
 
+    Both voxel arrays are rotated 90 degrees around the x-axis, and their y/z
+    boundaries are remapped to match the DOSXYZ_show coordinate convention.
 
     Args:
-        fn_3ddose_in (Path): input .3ddose
-        fn_phant_in (Path): input .egsphant
-        fn_3ddose_out (Path): output .3ddose
-        fn_phant_out (Path): output .egsphant
-        overwrite (bool, optional): overwrite output files. Defaults to False.
+        fn_3ddose_in: Input .3ddose path.
+        fn_phant_in: Input .egsphant path.
+        fn_3ddose_out: Output .3ddose path.
+        fn_phant_out: Output .egsphant path.
+        overwrite: Whether to replace existing output files. Defaults to False.
     """
     dose = Egs3dDose().read_3ddose(fn_3ddose_in)   # .3ddose data
     phant = EgsPhant().read_egsphant(fn_phant_in)  # .egsphant data
@@ -43,13 +41,13 @@ def dcm2egs_3ddose(fn_3ddose_in, fn_phant_in, fn_3ddose_out, fn_phant_out,  over
 
 
 def dcm2egs_3ddose_full(fn3ddose_base, fnphant_base=None, postfix="_1", overwrite=False):
-    """prepare file names and call dcm2egs_3ddose(...)
+    """Build input/output filenames and convert the dose and phantom files.
 
     Args:
-        fn3ddose_base (str): input file base of .3ddose (.egsphant)
-        fnphant_base (str): input file base of .egsphant
-        postfix (str, optional): string added to fbase_in creates output. Defaults to "_1".
-        overwrite (bool, optional): overwrite output files. Defaults to False.
+        fn3ddose_base: Input dose filename without its extension.
+        fnphant_base: Input phantom filename without its extension. Defaults to fn3ddose_base.
+        postfix: Suffix inserted before each output extension. Defaults to "_1".
+        overwrite: Whether to replace existing output files. Defaults to False.
     """
 
     if fnphant_base is None:

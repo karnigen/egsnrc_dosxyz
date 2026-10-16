@@ -4,30 +4,24 @@ from pathlib import Path
 
 import numpy as np
 
-# Usage:
-#    dose3d = Egs3dDose().read_3ddose(fn_3ddose_in)
-#    dose3d.write_3ddose(fn_3ddose_out)
 
-
-# - 3ddose format see pirs794 dosxyznrc, chapter 12
-# - read and write .3ddose files
-# - memory layout of .3ddose is Fortran, using axes order z,y,x for dose[z,y,x], err[z,y,x]
-#   - numpy only knows C memory layout and Fortran layout is only view
+# The .3ddose format is described in PIRS-794, DOSXYZnrc manual, chapter 12.
+# Values are stored with x varying fastest; NumPy arrays use (z, y, x) axis order.
 #
 class Egs3dDose:
+    """Read and write DOSXYZnrc .3ddose dose and uncertainty grids."""
+
     def __init__(self):
         pass
 
-    # reading 3ddose format
-    #    - only 6 lines !!!
     def read_3ddose(self, fn_3ddose_in):
-        """read .3ddose file
+        """Read a .3ddose file into this object.
 
         Args:
-            fn_3ddose_in (str): .3ddose file name
+            fn_3ddose_in: Input .3ddose filename or path.
 
         Returns:
-            Egs3dDose: self
+            This dose object, for method chaining.
         """
         fn_3ddose_in = Path(fn_3ddose_in)
         with fn_3ddose_in.open("r") as fi:
@@ -40,14 +34,14 @@ class Egs3dDose:
         return self
 
     def write_3ddose(self, fn_3ddose_out, overwrite = False):
-        """write .3ddose format file
+        """Write this dose object in .3ddose format.
 
         Args:
-            fn_3ddose_out (str): .3ddose output file
-            overwrite (bool, optional): overwrite output file. Defaults to False.
+            fn_3ddose_out: Output .3ddose filename or path.
+            overwrite: Whether to replace an existing file. Defaults to False.
 
         Returns:
-            Egs3dDose: self
+            This dose object, for method chaining.
         """
         fn_3ddose_out = Path(fn_3ddose_out)
         if not overwrite and fn_3ddose_out.exists():

@@ -10,22 +10,15 @@ from pathlib import Path
 
 import numpy as np
 
-# IAEA phsp file format - in egsnrc
+# IAEA phase-space format used by EGSnrc.
 # =================================
-# General rules:
-#   - c /**/ and c++ // comments are ignored, are allowed anywhere, free format
-#   - file contains blockname with block
-#   - blockname format
-#     - $blockname:   - on separate line
-#   - block
-#     - starts immediately after blockname
-#     - \n is part of block
-#     - block end with next blockname ($) or eof
+# Header files contain named blocks such as ``$PARTICLES:``. This parser
+# recognizes ``//`` comments and preserves each block's lines and comments.
 #
-# - CHECKSUM = RECORD_LENGTH * PARTICLES
+# CHECKSUM = RECORD_LENGTH * PARTICLES.
 #
 
-# - order of particles types is strictly given ???
+# Particle-count fields handled when joining headers.
 iaeaphsp_particles = ['PHOTONS','ELECTRONS','POSITRONS','NEUTRONS','PROTONS']
 
 
@@ -50,16 +43,9 @@ class IAEAparser:
     def __init__(self):
         self.record_length=0
 
-    # set phsp record parameters
-    # PH - input from read_iaeaphsp_header(fn)
-    # record contents: 9  compulsory + I extra + F extra
-    #  type,energy are not in RECORD_CONTENTS
-    #    1    2    345 678   9    - given order
-    #  type energy xyz uvw   wt
-    #
-    # - motivation: iaea_header.cpp in egs
     def setup_record(self, PH):
-        # parsing RECORD_CONTENTS
+        """Configure binary-record decoding from a parsed IAEA header."""
+        # The first nine values describe required fields and extra-value counts.
         RECORD_CONTENTS = list( filter(str.strip,  PH['RECORD_CONTENTS'][0]) )  # skip empty lines
         RECORD_CONSTANT = list( filter(str.strip,  PH['RECORD_CONSTANT'][0]) )  # skip empty lines
 
@@ -70,7 +56,7 @@ class IAEAparser:
         self.extralong_contents = np.array([int(i) for i in RECORD_CONTENTS[9+self.nxfloat:9+self.nxfloat+self.nxlong]], dtype="i2")
         # print(self.record_contents, self.extrafloat_contents, self.extralong_contents )
 
-        # read RECORD_CONSTANT - all zeros in record_contents are record_constant, eg only one z for whole phsp file
+        # Zero flags in RECORD_CONTENTS mark values supplied by RECORD_CONSTANT.
         self.record_constant=np.ones( 7, dtype="f4")*np.nan
         ix1 = self.record_contents[0:7] == 0  # constant indexes has zero in RECORD_CONTENTS
         self.constant = np.array([ float(i) for i in RECORD_CONSTANT ], dtype="f4") # set specified constants to array or NaN
@@ -97,7 +83,7 @@ class IAEAparser:
         self.record_length -= 4 # w is not stored, just his sign
 
         # struct.unpack string
-        self.record_unpack = "=bf"  # type and energy 1B+4B,  =B no allignment, otherwise B takes 4bytes, instead of 1B
+        self.record_unpack = "=bf"  # Standard sizes, no padding: 1 byte for type and 4 for energy.
         self.record_unpack += f"{np.sum(self.record_contents[0:7]) - 1}f"  # xyz uvw whgt
         if self.nxfloat > 0: self.record_unpack += f"{self.nxfloat}f"
         if self.nxlong > 0: self.record_unpack += f"{self.nxlong}i"
@@ -107,9 +93,9 @@ class IAEAparser:
         print(f"record_length:{self.record_length} particles:{self.particles} unpack:{self.record_unpack}")
 
 
-    # convert binary data to structure
     def decode_record(self, b):
-        q = struct.unpack(self.record_unpack, b)  # no allignment !!!
+        """Decode one binary phase-space record into an IAEArecord."""
+        q = struct.unpack(self.record_unpack, b)  # Unpack using the configured standard sizes.
         self.r.t = q[0]
         self.r.E = q[1]
         for i in range(len(self.rec_attr)):              # parse dynamic data
@@ -143,9 +129,8 @@ class IAEAparser:
         return self.r
 
 
-    # fnphsp - phsp with ending IAEAphsp
-    # - example how to read phsp file
     def read_test(self, fnphsp):
+        """Print the first 15 records from a binary phase-space file."""
         if self.record_length <= 0:
             print("Error: record not set up")
             sys.exit()
@@ -157,22 +142,16 @@ class IAEAparser:
                 print(r)
 
 
-# simple iaea header reader
-# PH - order of blocks as in input file
-#    - for each blockname: is array of array
-#      - [0] are lines [] - without \n
-#      - [1] are notes [] - same size as lines contains c++ notes //
-#      - empty lines are ignored, but lines with only c++ comment // are stored as empty line + notes
+# Header values are stored in input order. Each block maps to a pair of lists:
+# content lines and their corresponding ``//`` comments. Blank lines are ignored.
 def read_iaeaphsp_header(filename_iaeaphsp):
-    """simple iaea header reader
+    """Read an IAEA phase-space header.
 
     Args:
-        filename_iaeaphsp (str): IAEA phase spase full filename with extension .IAEAheader
+        filename_iaeaphsp: Path to an ``.IAEAheader`` file.
 
     Returns:
-        dict: IAEA phase space as discionary, all values as strings
-              key : [0] - lines
-                    [1] - notes
+        A dictionary mapping each block name to its content lines and comments.
     """
     def split_data(data):
         lines,notes=[],[]
@@ -220,8 +199,14 @@ def read_iaeaphsp_header(filename_iaeaphsp):
 
     return PH
 
-# PH - dictionary phase spase header
 def write_iaeaphsp_header(PH, filename_iaeaphsp, overwrite=False):
+    """Write parsed IAEA header blocks to an ``.IAEAheader`` file.
+
+    Args:
+        PH: Mapping of block names to content lines and ``//`` comments.
+        filename_iaeaphsp: Output header filename or path.
+        overwrite: Whether to replace an existing file. Defaults to False.
+    """
     filename_iaeaphsp = Path(filename_iaeaphsp)
     if not overwrite and filename_iaeaphsp.exists():
         print(f"File {filename_iaeaphsp} already exists")
@@ -239,9 +224,13 @@ def write_iaeaphsp_header(PH, filename_iaeaphsp, overwrite=False):
 
 
 
-# phsps_in - list of phsp spaces
-# phsp_out - output phsp with .IAEAheader suffix
 def join_iaeaphsp(phsps_in, phsp_out, overwrite=False):
+    """Join IAEA headers and their matching binary phase-space files.
+
+    Each input header must have a matching ``.IAEAphsp`` file with the same
+    base name. The output header and binary data use the base name of
+    ``phsp_out``.
+    """
     phsp_out = Path(phsp_out)
     phsps_in = [Path(fn) for fn in phsps_in]
 
@@ -253,9 +242,7 @@ def join_iaeaphsp(phsps_in, phsp_out, overwrite=False):
         print(f"File {phsp_out} already exists")
         sys.exit(1)
 
-    # simple join headers - without STATISTICAL_INFORMATION_PARTICLES and STATISTICAL_INFORMATION_GEOMETRY
-    # PH       key : [0] - lines
-    #                [1] - notes
+    # Joined headers omit per-file particle and geometry statistics.
     PH=None
     for fn in phsps_in:
         if fn.suffix != ".IAEAheader":
@@ -276,7 +263,7 @@ def join_iaeaphsp(phsps_in, phsp_out, overwrite=False):
     del PH['STATISTICAL_INFORMATION_PARTICLES']
     del PH['STATISTICAL_INFORMATION_GEOMETRY']
 
-    # add list of input files into notes
+    # Record the input header paths in the output notes.
     PH['ADDITIONAL_NOTES'][0].extend(phsps_in)
     PH['ADDITIONAL_NOTES'][1].extend([''] * len(phsps_in))
 
@@ -290,8 +277,7 @@ def join_iaeaphsp(phsps_in, phsp_out, overwrite=False):
     phsps_in2 = [ fn.with_suffix('.IAEAphsp') for fn in phsps_in]
     # print(phsp_out2, phsps_in2)
 
-    # - cat files in order of phsps_in
-    # - must be binary 'wb' 'rb'
+    # Concatenate the binary files in input order.
     with phsp_out2.open('wb') as wfd:
         for fn in phsps_in2:
             with fn.open('rb') as fd:

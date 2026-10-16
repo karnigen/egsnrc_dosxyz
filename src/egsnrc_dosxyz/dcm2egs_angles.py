@@ -4,18 +4,18 @@ import argparse
 
 import numpy as np
 
-# method based on: Beam coordinate transformations from DICOM to DOSXYZnrc, Lixin Zhan
+# Algorithm based on "Beam coordinate transformations from DICOM to DOSXYZnrc" by Lixin Zhan.
 
 def dcm2egs_angles(gantry, couch, collimator):
-    """convert DICOM RT plan angles to dosxyz angles in dicom coords
+    """Convert DICOM RT plan angles to DOSXYZnrc phase-space angles.
 
     Args:
-        gantry (deg): gantry angle
-        couch (deg): couch angle
-        collimator (deg): collimator angle
+        gantry: Gantry angle in degrees.
+        couch: Couch angle in degrees.
+        collimator: Collimator angle in degrees.
 
     Returns:
-        theta,phi,phicol (deg): dosxyz phsp angles
+        A tuple of theta, phi, and collimator phase-space angles in degrees.
     """
     gamma = np.radians(gantry)
     col = np.radians(collimator)

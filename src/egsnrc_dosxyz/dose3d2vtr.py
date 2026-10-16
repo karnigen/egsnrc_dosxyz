@@ -7,10 +7,11 @@ from pyevtk.hl import gridToVTK
 
 from egsnrc_dosxyz.egs3ddose import Egs3dDose
 
-# convert .3ddose to rectilinear vtk
-# - in paraview first use filter CellData2PointData
+# Convert a .3ddose file to a VTK rectilinear grid (.vtr).
+# In ParaView, apply the Cell Data to Point Data filter before visualization.
 
 def dose3d2vtr(fn_base, overwrite=False):
+    """Convert a .3ddose file, using its filename stem, to a .vtr grid."""
     fn_base = Path(fn_base)
     fn_3ddose_in = Path(f"{fn_base}.3ddose")
     fn_vtr_out = Path(f"{fn_base}.vtr")
@@ -19,7 +20,7 @@ def dose3d2vtr(fn_base, overwrite=False):
 
     dose = Egs3dDose().read_3ddose(fn_3ddose_in)
     cell_data = {
-        "dose": dose.dose.flatten(),  # data already in F order, must be flatten
+        "dose": dose.dose.flatten(),  # VTK expects the cell values as a flat array.
     }
     gridToVTK(str(fn_base), x=dose.bx, y=dose.by, z=dose.bz, cellData=cell_data)
 
