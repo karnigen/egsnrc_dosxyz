@@ -1,3 +1,6 @@
+#!/usr/bin/env uvr
+
+import argparse
 import shutil
 import struct
 import sys
@@ -295,13 +298,17 @@ def join_iaeaphsp(phsps_in, phsp_out, overwrite=False):
                 shutil.copyfileobj(fd, wfd)
 
 
-if __name__ == "__main__":
-    # PH = read_iaeaphsp_header("ex1.IAEAheader")
-    # print(PH['PARTICLES'])
-    # print(PH['MONTE_CARLO_CODE_VERSION'])
-    # print(PH['GLOBAL_PHOTON_ENERGY_CUTOFF'])
-    # write_iaeaphsp_header(PH, "ex2.IAEAheader", overwrite=True)
+def main():
+    parser = argparse.ArgumentParser(
+        description="Join IAEA phase-space headers and their matching binary files."
+    )
+    parser.add_argument("inputs", nargs="+", type=Path, help="input .IAEAheader files")
+    parser.add_argument("--output", required=True, type=Path, help="output .IAEAheader path")
+    parser.add_argument("--overwrite", action="store_true", help="replace existing output files")
+    args = parser.parse_args()
 
-    ph_in = ["ex1.IAEAheader", "ex2.IAEAheader"]
-    ph_ou = "ex_all.IAEAheader"
-    join_iaeaphsp(ph_in, ph_ou, overwrite=True)
+    join_iaeaphsp(args.inputs, args.output, overwrite=args.overwrite)
+
+
+if __name__ == "__main__":
+    main()
