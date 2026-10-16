@@ -1,11 +1,11 @@
-#!/usr/bin/env python3
-
-from dataclasses import dataclass,field
-
-from pathlib import Path
 import shutil
-import numpy as np
 import struct
+import sys
+from dataclasses import dataclass, field
+from math import hypot
+from pathlib import Path
+
+import numpy as np
 
 # IAEA phsp file format - in egsnrc
 # =================================
@@ -14,11 +14,11 @@ import struct
 #   - file contains blockname with block
 #   - blockname format
 #     - $blockname:   - on separate line
-#   - block 
+#   - block
 #     - starts immediately after blockname
 #     - \n is part of block
 #     - block end with next blockname ($) or eof
-#  
+#
 # - CHECKSUM = RECORD_LENGTH * PARTICLES
 #
 
@@ -95,9 +95,9 @@ class IAEAparser:
 
         # struct.unpack string
         self.record_unpack = "=bf"  # type and energy 1B+4B,  =B no allignment, otherwise B takes 4bytes, instead of 1B
-        self.record_unpack+="{}f".format(np.sum(self.record_contents[0:7])-1) # xyz uvw whgt
-        if self.nxfloat > 0: self.record_unpack+="{}f".format(self.nxfloat)
-        if self.nxlong  > 0: self.record_unpack+="{}i".format(self.nxlong)
+        self.record_unpack += f"{np.sum(self.record_contents[0:7]) - 1}f"  # xyz uvw whgt
+        if self.nxfloat > 0: self.record_unpack += f"{self.nxfloat}f"
+        if self.nxlong > 0: self.record_unpack += f"{self.nxlong}i"
 
         # particles
         self.particles = PH['PARTICLES'][0][0]
@@ -119,7 +119,7 @@ class IAEAparser:
             self.r.t = -self.r.t
         else:
             sw=1
-        
+
         if self.r.E < 0:  # new history
             self.r.h=0
             self.r.E = -self.r.E
@@ -132,9 +132,9 @@ class IAEAparser:
         if aux <= 1.0:
             self.r.w = sw * np.sqrt(1.0 - aux)
         else:
-            aux = sqrt(aux)
-            self.r.u /= aux
-            self.r.v /= aux
+            norm = hypot(self.r.u, self.r.v)
+            self.r.u /= norm
+            self.r.v /= norm
 
         # print(self.r)
         return self.r
@@ -145,8 +145,7 @@ class IAEAparser:
     def read_test(self, fnphsp):
         if self.record_length <= 0:
             print("Error: record not set up")
-            exit()
-            return
+            sys.exit()
 
         with open(fnphsp, "rb") as fi:
             for i in range(15):
@@ -223,7 +222,7 @@ def write_iaeaphsp_header(PH, filename_iaeaphsp, overwrite=False):
     filename_iaeaphsp = Path(filename_iaeaphsp)
     if not overwrite and filename_iaeaphsp.exists():
         print(f"File {filename_iaeaphsp} already exists")
-        exit(1)
+        sys.exit(1)
 
     with open(filename_iaeaphsp, "w") as fo:
         for k,v in PH.items():
@@ -235,7 +234,7 @@ def write_iaeaphsp_header(PH, filename_iaeaphsp, overwrite=False):
                 fo.write("\n")
             fo.write("\n")
 
- 
+
 
 # phsps_in - list of phsp spaces
 # phsp_out - output phsp with .IAEAheader suffix
@@ -245,11 +244,11 @@ def join_iaeaphsp(phsps_in, phsp_out, overwrite=False):
 
     if phsp_out.suffix != ".IAEAheader":
         print(f"File {phsp_out} suffix is not .IAEAheader")
-        exit(1)
+        sys.exit(1)
 
     if not overwrite and phsp_out.exists():
         print(f"File {phsp_out} already exists")
-        exit(1)
+        sys.exit(1)
 
     # simple join headers - without STATISTICAL_INFORMATION_PARTICLES and STATISTICAL_INFORMATION_GEOMETRY
     # PH       key : [0] - lines
@@ -258,7 +257,7 @@ def join_iaeaphsp(phsps_in, phsp_out, overwrite=False):
     for fn in phsps_in:
         if fn.suffix != ".IAEAheader":
             print(f"File {fn} suffix is not .IAEAheader")
-            exit(1)
+            sys.exit(1)
         ph = read_iaeaphsp_header(fn)
         if PH is None:   # first just simply copy header
             PH=ph
